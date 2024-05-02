@@ -1,8 +1,15 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import Stats from "three/examples/jsm/libs/stats.module.js";
 
 import { FirstPersonControls } from "three/addons/controls/FirstPersonControls.js";
+import { Maze } from "./maze";
+import { Player } from "./player";
+import { createGUI } from "./gui";
+
+const stats = new Stats();
+document.body.append(stats.dom);
 
 /**
  * Base
@@ -17,26 +24,31 @@ const scene = new THREE.Scene();
 /**
  * Models
  */
-const gltfLoader = new GLTFLoader();
+// const gltfLoader = new GLTFLoader();
 
-gltfLoader.load("/models/Duck/glTF/Duck.gltf", (gltf) => {
-	scene.add(gltf.scene);
-});
+// gltfLoader.load("/models/Duck/glTF/Duck.gltf", (gltf) => {
+// 	scene.add(gltf.scene);
+// });
 
 /**
  * Floor
  */
-const floor = new THREE.Mesh(
-	new THREE.PlaneGeometry(10, 10),
-	new THREE.MeshStandardMaterial({
-		color: "#444444",
-		metalness: 0,
-		roughness: 0.5,
-	})
-);
-floor.receiveShadow = true;
-floor.rotation.x = -Math.PI * 0.5;
-scene.add(floor);
+// const floor = new THREE.Mesh(
+// 	new THREE.PlaneGeometry(10, 10),
+// 	new THREE.MeshStandardMaterial({
+// 		color: "#444444",
+// 		metalness: 0,
+// 		roughness: 0.5,
+// 	})
+// );
+// floor.receiveShadow = true;
+// floor.rotation.x = -Math.PI * 0.5;
+// scene.add(floor);
+const maze = new Maze();
+maze.generate();
+scene.add(maze);
+
+const player = new Player(scene);
 
 /**
  * Lights
@@ -69,8 +81,12 @@ window.addEventListener("resize", () => {
 	sizes.height = window.innerHeight;
 
 	// Update camera
-	camera.aspect = sizes.width / sizes.height;
-	camera.updateProjectionMatrix();
+	orbitCamera.aspect = sizes.width / sizes.height;
+	orbitCamera.updateProjectionMatrix();
+
+	player.camera.aspect = sizes.width / sizes.height;
+	player.camera.updateProjectionMatrix();
+
 
 	// Update renderer
 	renderer.setSize(sizes.width, sizes.height);
@@ -81,23 +97,25 @@ window.addEventListener("resize", () => {
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(
+const orbitCamera = new THREE.PerspectiveCamera(
 	75,
 	sizes.width / sizes.height,
 	0.1,
 	100
 );
-camera.position.set(2, 2, 2);
-scene.add(camera);
+// camera.position.set(2, 2, 2);
+orbitCamera.position.set(-32, 16, -32);
+scene.add(orbitCamera);
 
 // Controls
-const controls = new OrbitControls(camera, canvas);
-controls.target.set(0, 0.75, 0);
+const controls = new OrbitControls(orbitCamera, canvas);
+// controls.target.set(0, 0.75, 0);
+controls.target.set(16, 0, 16);
 controls.enableDamping = true;
 
-const firstPersonControls = new FirstPersonControls(camera, canvas);
-camera.position.set(2, 2, 2);
-firstPersonControls.lookAt(0, 0, 0); // Patrz na środek sceny
+// const firstPersonControls = new FirstPersonControls(camera, canvas);
+// camera.position.set(2, 2, 2);
+// firstPersonControls.lookAt(0, 0, 0); // Patrz na środek sceny
 
 /**
  * Renderer
@@ -124,13 +142,17 @@ const tick = () => {
 
 	// Update controls
 	controls.update();
-	firstPersonControls.update(deltaTime);
+	// firstPersonControls.update(deltaTime);
+	player.applyInputs(deltaTime);
 
 	// Render
-	renderer.render(scene, camera);
+	// renderer.render(scene, camera);
+	renderer.render(scene, player.controls.isLocked ? player.camera : orbitCamera);
 
+	stats.update();
 	// Call tick again on the next frame
 	window.requestAnimationFrame(tick);
 };
 
+createGUI(maze, player);
 tick();

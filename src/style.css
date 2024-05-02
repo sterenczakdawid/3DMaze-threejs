@@ -5,3 +5,13 @@
 	padding: 0;
 	box-sizing: border-box;
 }
+
+#info {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	font-size: 24px;
+	font-style: italic;
+	color: #fff;
+	margin: 8px;
+}
