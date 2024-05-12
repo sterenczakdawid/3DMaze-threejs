@@ -16,7 +16,8 @@ export class Player {
 	cameraHelper = new THREE.CameraHelper(this.camera);
 
 	constructor(scene) {
-		this.position.set(32, 16, 32);
+		// this.position.set(32, 2, 32);
+		this.position.set(0, 2, 0);
 		scene.add(this.camera);
 		scene.add(this.cameraHelper);
 

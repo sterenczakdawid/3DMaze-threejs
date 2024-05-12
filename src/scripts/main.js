@@ -1,19 +1,20 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 
 import { FirstPersonControls } from "three/addons/controls/FirstPersonControls.js";
 import { Maze } from "./maze";
+import { MazeGenerator } from "./maze2";
 import { Player } from "./player";
 import { createGUI } from "./gui";
 
 const stats = new Stats();
 document.body.append(stats.dom);
 
-/**
- * Base
- */
+// /**
+//  * Base
+//  */
 
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
@@ -24,15 +25,15 @@ const scene = new THREE.Scene();
 /**
  * Models
  */
-// const gltfLoader = new GLTFLoader();
+// // const gltfLoader = new GLTFLoader();
 
-// gltfLoader.load("/models/Duck/glTF/Duck.gltf", (gltf) => {
-// 	scene.add(gltf.scene);
-// });
+// // gltfLoader.load("/models/Duck/glTF/Duck.gltf", (gltf) => {
+// // 	scene.add(gltf.scene);
+// // });
 
-/**
- * Floor
- */
+// /**
+//  * Floor
+//  */
 // const floor = new THREE.Mesh(
 // 	new THREE.PlaneGeometry(10, 10),
 // 	new THREE.MeshStandardMaterial({
@@ -44,15 +45,21 @@ const scene = new THREE.Scene();
 // floor.receiveShadow = true;
 // floor.rotation.x = -Math.PI * 0.5;
 // scene.add(floor);
+// console.log(floor.position);
 const maze = new Maze();
+// maze.initializeCells();
 maze.generate();
+// console.log(maze);
+// maze.setup();
+// console.log(maze);
+// maze.draw();
 scene.add(maze);
 
 const player = new Player(scene);
 
-/**
- * Lights
- */
+// /**
+//  * Lights
+//  */
 const ambientLight = new THREE.AmbientLight(0xffffff, 2.4);
 scene.add(ambientLight);
 
@@ -87,7 +94,6 @@ window.addEventListener("resize", () => {
 	player.camera.aspect = sizes.width / sizes.height;
 	player.camera.updateProjectionMatrix();
 
-
 	// Update renderer
 	renderer.setSize(sizes.width, sizes.height);
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -101,13 +107,13 @@ const orbitCamera = new THREE.PerspectiveCamera(
 	75,
 	sizes.width / sizes.height,
 	0.1,
-	100
+	1000
 );
 // camera.position.set(2, 2, 2);
 orbitCamera.position.set(-32, 16, -32);
 scene.add(orbitCamera);
 
-// Controls
+// // // Controls
 const controls = new OrbitControls(orbitCamera, canvas);
 // controls.target.set(0, 0.75, 0);
 controls.target.set(16, 0, 16);
@@ -129,6 +135,12 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+// const mazeGenerator = new MazeGenerator(scene, null, {
+// 	rows: 7,
+// 	cols: 7,
+// 	debugPanel: null,
+// 	playerEnabled: false,
+// });
 /**
  * Animate
  */
@@ -140,14 +152,21 @@ const tick = () => {
 	const deltaTime = elapsedTime - previousTime;
 	previousTime = elapsedTime;
 
+	// setTimeout(() => {
+	// 	mazeGenerator.step();
+	// }, 1000);
 	// Update controls
 	controls.update();
 	// firstPersonControls.update(deltaTime);
 	player.applyInputs(deltaTime);
+	// maze.draw();
 
 	// Render
 	// renderer.render(scene, camera);
-	renderer.render(scene, player.controls.isLocked ? player.camera : orbitCamera);
+	renderer.render(
+		scene,
+		player.controls.isLocked ? player.camera : orbitCamera
+	);
 
 	stats.update();
 	// Call tick again on the next frame
