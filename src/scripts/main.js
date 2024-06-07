@@ -8,6 +8,7 @@ import { Maze } from "./maze";
 import { MazeGenerator } from "./maze2";
 import { Player } from "./player";
 import { createGUI } from "./gui";
+import { Physics } from "./physics";
 
 const stats = new Stats();
 document.body.append(stats.dom);
@@ -56,6 +57,7 @@ maze.generate();
 scene.add(maze);
 
 const player = new Player(scene);
+const physics = new Physics(scene);
 
 // /**
 //  * Lights
@@ -147,31 +149,49 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const clock = new THREE.Clock();
 let previousTime = 0;
 
-const tick = () => {
-	const elapsedTime = clock.getElapsedTime();
-	const deltaTime = elapsedTime - previousTime;
-	previousTime = elapsedTime;
+function animate() {
+	requestAnimationFrame(animate);
 
-	// setTimeout(() => {
-	// 	mazeGenerator.step();
-	// }, 1000);
-	// Update controls
+	const currentTime = performance.now();
+	const deltaTime = (currentTime - previousTime) / 1000;
+
+	// Only update physics when player controls are locked
+	// if (player.controls.isLocked) {
 	controls.update();
-	// firstPersonControls.update(deltaTime);
 	player.applyInputs(deltaTime);
-	// maze.draw();
+	player.updateBoundsHelper();
+	physics.update(deltaTime, player, maze);
 
-	// Render
-	// renderer.render(scene, camera);
 	renderer.render(
 		scene,
 		player.controls.isLocked ? player.camera : orbitCamera
 	);
-
 	stats.update();
-	// Call tick again on the next frame
-	window.requestAnimationFrame(tick);
-};
+
+	previousTime = currentTime;
+}
+// const tick = () => {
+// 	const elapsedTime = clock.getElapsedTime();
+// 	const deltaTime = elapsedTime - previousTime;
+// 	previousTime = elapsedTime;
+
+// Update controls
+// controls.update();
+// firstPersonControls.update(deltaTime);
+// player.applyInputs(deltaTime);
+// player.updateBoundsHelper();
+// physics.update(deltaTime, player, maze);
+// maze.draw();
+
+// Render
+// renderer.render(scene, camera);
+// renderer.render(scene, player.controls.isLocked ? player.camera : orbitCamera);
+
+// stats.update();
+// Call tick again on the next frame
+// window.requestAnimationFrame(tick);
+// };
 
 createGUI(maze, player);
-tick();
+// tick();
+animate();

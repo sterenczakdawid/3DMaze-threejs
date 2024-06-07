@@ -16,10 +16,10 @@ export class Cell extends THREE.Group {
 
 		this.visited = false;
 		this.walls = {
-			frontWall: true,
-			rightWall: true,
-			backWall: true,
-			leftWall: true,
+			frontWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: false },
+			rightWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: true },
+			backWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: false },
+			leftWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: true },
 		};
 	}
 
@@ -94,21 +94,21 @@ export class Cell extends THREE.Group {
 		let x = current.colNum - next.colNum;
 
 		if (x == 1) {
-			current.walls.frontWall = false;
-			next.walls.backWall = false;
+			current.walls.frontWall.exists = false;
+			next.walls.backWall.exists = false;
 		} else if (x == -1) {
-			current.walls.backWall = false;
-			next.walls.frontWall = false;
+			current.walls.backWall.exists = false;
+			next.walls.frontWall.exists = false;
 		}
 
 		let y = current.rowNum - next.rowNum;
 
 		if (y == 1) {
-			current.walls.rightWall = false;
-			next.walls.leftWall = false;
+			current.walls.rightWall.exists = false;
+			next.walls.leftWall.exists = false;
 		} else if (y == -1) {
-			current.walls.leftWall = false;
-			next.walls.rightWall = false;
+			current.walls.leftWall.exists = false;
+			next.walls.rightWall.exists = false;
 		}
 	}
 

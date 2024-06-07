@@ -15,8 +15,11 @@ const material1 = new THREE.MeshLambertMaterial({
 	wireframe: false,
 });
 
-const wallGeometry = new THREE.BoxGeometry(4, 4, 0.2);
-const wallMaterial = new THREE.MeshBasicMaterial({ color: "royalblue" });
+// const wallGeometry = new THREE.BoxGeometry(4.1, 4.1, 0.2);
+const wallGeometry = new THREE.PlaneGeometry(4, 4);
+const wallMaterial = new THREE.MeshLambertMaterial({ color: "royalblue" });
+// plane.material.side = THREE.DoubleSide;
+wallMaterial.side = THREE.DoubleSide;
 
 let current;
 
@@ -46,53 +49,41 @@ export class Maze extends THREE.Group {
 		}
 		current = this.grid[0][0];
 
-		// this.grid[0][0].walls.frontWall = false;
+		this.grid[0][0].walls.frontWall.exists = false;
+		this.grid[this.rows - 1][this.columns - 1].walls.backWall.exists = false;
+	}
+
+	getCell(x, y) {
+		if (x >= 0 && x < this.grid.length && y >= 0 && y < this.grid.length)
+			return this.grid[x][y];
 	}
 
 	generate() {
-		this.clear();
+		// this.clear();
 		this.add(this.currentCellHelper);
 		this.initializeCells();
-		// for (let x = 0; x < this.size; x++) {
-		// 	for (let z = 0; z < this.size; z++) {
-		// 		const cube = new THREE.Mesh(geometry, material);
-		// 		cube.position.set(x * 4.2, 0, z * 4.2);
-		// 		this.add(cube);
-		// 	}
-		// }
-		for (let r = 0; r < this.rows; r++) {
-			for (let c = 0; c < this.columns; c++) {
-				let cube;
-				if (r == 0) {
-					cube = new THREE.Mesh(geometry, material0);
-				} else if (c == 1) {
-					cube = new THREE.Mesh(geometry, material1);
-				} else {
-					cube = new THREE.Mesh(geometry, material);
-				}
-				cube.position.set(r * 4 + 2, 0, c * 4 + 2);
-				this.add(cube);
-				// let grid = this.grid;
-				// const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-				// wall.position.set(r * 4 + 2, 2, c * 4 + 2);
-				// wall.rotation.x -= Math.PI;
-				// this.add(wall);
-
-				// console.log(grid);
-				// console.log("przekazuję: ", this.size, this.rows, this.columns);
-				// grid[r][c].drawWalls(this.size, this.rows, this.columns);
-			}
-		}
 		this.draw();
-
-		// // const floor = new THREE.Mesh(new THREE.BoxGeometry(32, 32, 0.5), material);
-		// // floor.rotation.x -= Math.PI / 2;
-		// // floor.position.set(16, -0.25, 16);
-		// // this.add(floor);
 	}
 
 	draw() {
+		this.clear();
 		current.visited = true;
+		for (let r = 0; r < this.rows; r++) {
+			for (let c = 0; c < this.columns; c++) {
+				let cube;
+				// if (r == 0) {
+				// 	cube = new THREE.Mesh(geometry, material0);
+				// } else if (c == 1) {
+				// 	cube = new THREE.Mesh(geometry, material1);
+				// } else {
+				cube = new THREE.Mesh(geometry, material);
+				// }
+				cube.position.set(r * 4 + 2, -0.5, c * 4 + 2);
+				cube.castShadow = true;
+				cube.receiveShadow = true;
+				this.add(cube);
+			}
+		}
 		this.drawWalls();
 
 		let next = current.checkNeighbours();
@@ -125,92 +116,61 @@ export class Maze extends THREE.Group {
 	}
 
 	drawWalls() {
-		this.clear();
 		for (let r = 0; r < this.rows; r++) {
 			for (let c = 0; c < this.columns; c++) {
 				let cell = this.grid[r][c];
 				let startX = (cell.rowNum * this.size) / this.rows;
-				let endX = startX + this.size / this.rows;
 				let startZ = (cell.colNum * this.size) / this.columns;
 				let dims = this.size / this.rows;
-				let endZ = startZ + this.size / this.columns;
-				if (cell.walls.frontWall)
-					this.drawFrontWall(startX, startZ, endX, endZ, dims);
-				if (cell.walls.rightWall)
-					this.drawRightWall(startX, startZ, endX, endZ, dims);
-				if (cell.walls.backWall)
-					this.drawBackWall(startX, startZ, endX, endZ, dims);
-				if (cell.walls.leftWall)
-					this.drawLeftWall(startX, startZ, endX, endZ, dims);
-				if (cell.visited) {}
+				if (cell.walls.frontWall.exists)
+					this.drawFrontWall(cell, startX, startZ, dims);
+				if (cell.walls.rightWall.exists)
+					this.drawRightWall(cell, startX, startZ, dims);
+				if (cell.walls.backWall.exists)
+					this.drawBackWall(cell, startX, startZ, dims);
+				if (cell.walls.leftWall.exists)
+					this.drawLeftWall(cell, startX, startZ, dims);
+				if (cell.visited) {
+				}
 			}
 		}
 	}
 
-	drawFrontWall(startX, startZ, endX, endZ, dims) {
+	drawFrontWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 		wall.position.set(startX + dims - 2, 2, startZ);
+		cell.walls.frontWall.position = wall.position;
+		wall.castShadow = true;
+		wall.receiveShadow = true;
 		this.add(wall);
 	}
 
-	drawRightWall(startX, startZ, endX, endZ, dims) {
+	drawRightWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 		wall.position.set(startX, 2, startZ + 2);
+		cell.walls.rightWall.position = wall.position;
 		wall.rotation.y += Math.PI / 2;
+		wall.castShadow = true;
+		wall.receiveShadow = true;
 		this.add(wall);
 	}
 
-	drawBackWall(startX, startZ, endX, endZ, dims) {
+	drawBackWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 		wall.position.set(startX + dims - 2, 2, startZ + dims);
+		cell.walls.backWall.position = wall.position;
+		wall.castShadow = true;
+		wall.receiveShadow = true;
 		this.add(wall);
 	}
 
-	drawLeftWall(startX, startZ, endX, endZ, dims) {
+	drawLeftWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 		wall.position.set(startX + dims, 2, startZ + 2);
+		cell.walls.leftWall.position = wall.position;
 		wall.rotation.y += Math.PI / 2;
+		wall.castShadow = true;
+		wall.receiveShadow = true;
 		this.add(wall);
 	}
 }
-
-// 	draw() {
-// 		maze.width = this.size;
-// 		maze.height = this.size;
-// 		maze.style.background = "black";
-// 		current.visited = true;
-
-// 		for (let r = 0; r < this.rows; r++) {
-// 			for (let c = 0; c < this.columns; c++) {
-// 				let grid = this.grid;
-// 				grid[r][c].show(this.size, this.rows, this.columns);
-// 			}
-// 		}
-
-// 		let next = current.checkNeighbours();
-
-// 		if (next) {
-// 			next.visited = true;
-
-// 			this.stack.push(current);
-
-// 			current.highlight(this.columns);
-
-// 			current.removeWalls(current, next);
-
-// 			current = next;
-// 		} else if (this.stack.length > 0) {
-// 			let cell = this.stack.pop();
-// 			current = cell;
-// 			current.highlight(this.columns);
-// 		}
-
-// 		if (this.stack.length == 0) {
-// 			return;
-// 		}
-
-// 		window.requestAnimationFrame(() => {
-// 			this.draw();
-// 		});
-// 	}
-// }

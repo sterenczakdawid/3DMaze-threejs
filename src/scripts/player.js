@@ -2,7 +2,9 @@ import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/Addons.js";
 
 export class Player {
-	maxSpeed = 10;
+	radius = 0.5;
+	height = 1.8;
+	maxSpeed = 5;
 	input = new THREE.Vector3();
 	velocity = new THREE.Vector3();
 
@@ -16,13 +18,19 @@ export class Player {
 	cameraHelper = new THREE.CameraHelper(this.camera);
 
 	constructor(scene) {
-		// this.position.set(32, 2, 32);
-		this.position.set(0, 2, 0);
+		this.position.set(2, 2, -10);
+		this.camera.lookAt(2, 2, 1);
 		scene.add(this.camera);
 		scene.add(this.cameraHelper);
 
 		document.addEventListener("keydown", this.onKeyDown.bind(this));
 		document.addEventListener("keyup", this.onKeyUp.bind(this));
+
+		this.boundsHelper = new THREE.Mesh(
+			new THREE.CylinderGeometry(this.radius, this.radius, this.height, 16),
+			new THREE.MeshBasicMaterial({ wireframe: true })
+		);
+		scene.add(this.boundsHelper);
 	}
 
 	applyInputs(dt) {
@@ -59,7 +67,7 @@ export class Player {
 				this.input.x = this.maxSpeed;
 				break;
 			case "KeyR":
-				this.position.set(32, 16, 32);
+				this.position.set(10, 16, 10);
 				this.velocity.set(0, 0, 0);
 				break;
 		}
@@ -89,4 +97,9 @@ export class Player {
 		str += `Z: ${this.position.z.toFixed(3)}, `;
 		return str;
 	}
+
+	updateBoundsHelper() {
+    this.boundsHelper.position.copy(this.camera.position);
+    this.boundsHelper.position.y -= this.height / 2;
+  }
 }
