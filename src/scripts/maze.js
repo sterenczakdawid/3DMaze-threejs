@@ -1,24 +1,59 @@
 import * as THREE from "three";
 import { Cell } from "./cell";
 
-const geometry = new THREE.BoxGeometry(4, 1, 4);
-const material = new THREE.MeshLambertMaterial({
-	color: "limegreen",
-	wireframe: false,
-});
-const material0 = new THREE.MeshLambertMaterial({
-	color: "yellow",
-	wireframe: false,
-});
-const material1 = new THREE.MeshLambertMaterial({
-	color: "tomato",
-	wireframe: false,
+/**
+	Textures
+ */
+const textureLoader = new THREE.TextureLoader();
+const floorColorTexture = textureLoader.load(
+	"textures/floor/Gravel_001_BaseColor.jpg"
+);
+const floorAmbientOcclussionTexture = textureLoader.load(
+	"textures/floor/Gravel_001_AmbientOcclusion.jpg"
+);
+const floorNormalTexture = textureLoader.load(
+	"textures/floor/Gravel_001_Normal.jpg"
+);
+const floorRoughnessTexture = textureLoader.load(
+	"textures/floor/Gravel_001_Roughness.jpg"
+);
+floorColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const wallColorTexture = textureLoader.load(
+	"textures/wall/Stylized_Bricks_004_basecolor.png"
+);
+const wallAmbientOcclussionTexture = textureLoader.load(
+	"textures/wall/Stylized_Bricks_004_ambientOcclusion.png"
+);
+const wallNormalTexture = textureLoader.load(
+	"textures/wall/Stylized_Bricks_004_normal.png"
+);
+const wallRoughnessTexture = textureLoader.load(
+	"textures/wall/Stylized_Bricks_004_roughness.png"
+);
+wallColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const floorGeometry = new THREE.BoxGeometry(4, 1, 4);
+// const floorMaterial = new THREE.MeshLambertMaterial({
+// 	color: "limegreen",
+// 	wireframe: false,
+// });
+const floorMaterial = new THREE.MeshStandardMaterial({
+	roughness: 1,
+	map: floorColorTexture,
+	aoMap: floorAmbientOcclussionTexture,
+	roughnessMap: floorRoughnessTexture,
+	normalMap: floorNormalTexture,
 });
 
 // const wallGeometry = new THREE.BoxGeometry(4.1, 4.1, 0.2);
 const wallGeometry = new THREE.PlaneGeometry(4, 4);
-const wallMaterial = new THREE.MeshLambertMaterial({ color: "royalblue" });
-// plane.material.side = THREE.DoubleSide;
+const wallMaterial = new THREE.MeshStandardMaterial({
+	map: wallColorTexture,
+	aoMap: wallAmbientOcclussionTexture,
+	roughnessMap: wallRoughnessTexture,
+	normalMap: wallNormalTexture,
+});
 wallMaterial.side = THREE.DoubleSide;
 
 let current;
@@ -68,16 +103,11 @@ export class Maze extends THREE.Group {
 	draw() {
 		this.clear();
 		current.visited = true;
+		// console.log("Creating floor with texture:", texture);
 		for (let r = 0; r < this.rows; r++) {
 			for (let c = 0; c < this.columns; c++) {
 				let cube;
-				// if (r == 0) {
-				// 	cube = new THREE.Mesh(geometry, material0);
-				// } else if (c == 1) {
-				// 	cube = new THREE.Mesh(geometry, material1);
-				// } else {
-				cube = new THREE.Mesh(geometry, material);
-				// }
+				cube = new THREE.Mesh(floorGeometry, floorMaterial);
 				cube.position.set(r * 4 + 2, -0.5, c * 4 + 2);
 				cube.castShadow = true;
 				cube.receiveShadow = true;
@@ -87,23 +117,15 @@ export class Maze extends THREE.Group {
 		this.drawWalls();
 
 		let next = current.checkNeighbours();
-		// console.log("current: ", current.rowNum, current.colNum);
-		// console.log("next: ", next.rowNum, next.colNum);
 
 		if (next) {
 			next.visited = true;
-
 			this.stack.push(current);
-
-			// 	// current.highlight(this.columns);
-
 			current.removeWalls(current, next);
-
 			current = next;
 		} else if (this.stack.length > 0) {
 			let cell = this.stack.pop();
 			current = cell;
-			// 	// current.highlight(this.columns);
 		}
 
 		if (this.stack.length == 0) {

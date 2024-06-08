@@ -52,17 +52,12 @@ export class Physics {
 				candidates.push(wall);
 			}
 		}
-		// if (cell) candidates.push(cell);
-
-		// console.log(`Broadphase Candidates: ${candidates.length}`);
-		// console.log(candidates);
 
 		return candidates;
 	}
 
 	narrowPhase(candidates, player) {
 		const collisions = [];
-		// console.log(candidates);
 
 		for (const wall of candidates) {
 			const closestPoint = wall.isSide

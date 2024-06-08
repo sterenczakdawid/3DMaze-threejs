@@ -1,11 +1,9 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 
 import { FirstPersonControls } from "three/addons/controls/FirstPersonControls.js";
 import { Maze } from "./maze";
-import { MazeGenerator } from "./maze2";
 import { Player } from "./player";
 import { createGUI } from "./gui";
 import { Physics } from "./physics";
@@ -23,30 +21,7 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
-/**
- * Models
- */
-// // const gltfLoader = new GLTFLoader();
-
-// // gltfLoader.load("/models/Duck/glTF/Duck.gltf", (gltf) => {
-// // 	scene.add(gltf.scene);
-// // });
-
-// /**
-//  * Floor
-//  */
-// const floor = new THREE.Mesh(
-// 	new THREE.PlaneGeometry(10, 10),
-// 	new THREE.MeshStandardMaterial({
-// 		color: "#444444",
-// 		metalness: 0,
-// 		roughness: 0.5,
-// 	})
-// );
-// floor.receiveShadow = true;
-// floor.rotation.x = -Math.PI * 0.5;
-// scene.add(floor);
-// console.log(floor.position);
+// Maze
 const maze = new Maze();
 // maze.initializeCells();
 maze.generate();
@@ -56,12 +31,15 @@ maze.generate();
 // maze.draw();
 scene.add(maze);
 
+/**
+ * Player & physics
+ */
 const player = new Player(scene);
 const physics = new Physics(scene);
 
-// /**
-//  * Lights
-//  */
+/**
+ * Lights
+ */
 const ambientLight = new THREE.AmbientLight(0xffffff, 2.4);
 scene.add(ambientLight);
 
@@ -137,12 +115,6 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-// const mazeGenerator = new MazeGenerator(scene, null, {
-// 	rows: 7,
-// 	cols: 7,
-// 	debugPanel: null,
-// 	playerEnabled: false,
-// });
 /**
  * Animate
  */
