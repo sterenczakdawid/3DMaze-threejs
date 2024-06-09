@@ -31,32 +31,39 @@ scene.add(maze);
  */
 const player = new Player(scene);
 const physics = new Physics(scene);
+player.maxSpeed = 7;
+player.cameraHelper.visible = false;
+player.boundsHelper.visible = false;
+physics.helpers.visible = false;
 
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 2.4);
+const ambientLight = new THREE.AmbientLight(0x404040, 4); // Increase intensity for brighter ambient light
 scene.add(ambientLight);
 
-// const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
-// directionalLight.castShadow = true;
-// directionalLight.shadow.mapSize.set(1024, 1024);
-// directionalLight.shadow.camera.far = 15;
-// directionalLight.shadow.camera.left = -7;
-// directionalLight.shadow.camera.top = 7;
-// directionalLight.shadow.camera.right = 7;
-// directionalLight.shadow.camera.bottom = -7;
-// directionalLight.position.set(10, 10, 10);
-// scene.add(directionalLight);
-
-const pointLight = new THREE.PointLight(0xffffff, 0.5);
-pointLight.position.set(10, 50, 10);
-scene.add(pointLight);
-
-// Dodanie DirectionalLight
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(0, 1, 1).normalize();
+const directionalLight = new THREE.DirectionalLight(0x0000ff, 2.0);
+directionalLight.position.set(50, 100, 50);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.left = -100;
+directionalLight.shadow.camera.right = 100;
+directionalLight.shadow.camera.top = 100;
+directionalLight.shadow.camera.bottom = -100;
 scene.add(directionalLight);
+
+// Green light at the entrance
+const entranceLight = new THREE.PointLight(0xff0000, 50, 20);
+entranceLight.position.set(2, 2, -1);
+scene.add(entranceLight);
+
+// Green light at the exit
+const exitLight = new THREE.PointLight(0x00ff00, 50, 20);
+exitLight.position.set(maze.rows * 4 - 2, 2, maze.columns * 4);
+scene.add(exitLight);
 
 /**
  * Sizes
@@ -158,6 +165,7 @@ function resetGame() {
 	maze.generate();
 	scene.add(maze);
 	restartButton.classList.remove("btn-visible");
+	restartButton.classList.add("dn");
 	timerElement.innerText = "Time: 0:00";
 }
 
@@ -170,6 +178,7 @@ function checkIfPlayerReachedEnd() {
 		stopTimer();
 		player.controls.unlock();
 		restartButton.classList.add("btn-visible");
+		restartButton.classList.remove("dn");
 	}
 }
 
@@ -179,12 +188,9 @@ function animate() {
 	const currentTime = performance.now();
 	const deltaTime = (currentTime - previousTime) / 1000;
 
-	// Only update physics when player controls are locked
-	// if (player.controls.isLocked) {
 	controls.update();
 	player.applyInputs(deltaTime);
 	player.updateBoundsHelper();
-	// console.log(player.position);
 	if (player.position.z > -1 && !isTimerRunning) {
 		startTimer();
 	}

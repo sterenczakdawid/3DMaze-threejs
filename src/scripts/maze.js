@@ -59,7 +59,7 @@ wallMaterial.side = THREE.DoubleSide;
 let current;
 
 export class Maze extends THREE.Group {
-	constructor(size = 7) {
+	constructor(size = 5) {
 		super();
 		this.size = size * 4;
 		this.rows = size;
