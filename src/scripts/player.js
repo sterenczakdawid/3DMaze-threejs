@@ -99,7 +99,7 @@ export class Player {
 	}
 
 	updateBoundsHelper() {
-    this.boundsHelper.position.copy(this.camera.position);
-    this.boundsHelper.position.y -= this.height / 2;
-  }
+		this.boundsHelper.position.copy(this.camera.position);
+		this.boundsHelper.position.y -= this.height / 2;
+	}
 }

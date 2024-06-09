@@ -46,8 +46,8 @@ const floorMaterial = new THREE.MeshStandardMaterial({
 	normalMap: floorNormalTexture,
 });
 
-// const wallGeometry = new THREE.BoxGeometry(4.1, 4.1, 0.2);
-const wallGeometry = new THREE.PlaneGeometry(4, 4);
+const wallGeometry = new THREE.BoxGeometry(4.1, 4.1, 0.2);
+// const wallGeometry = new THREE.PlaneGeometry(4, 4);
 const wallMaterial = new THREE.MeshStandardMaterial({
 	map: wallColorTexture,
 	aoMap: wallAmbientOcclussionTexture,
@@ -59,7 +59,7 @@ wallMaterial.side = THREE.DoubleSide;
 let current;
 
 export class Maze extends THREE.Group {
-	constructor(size = 10) {
+	constructor(size = 7) {
 		super();
 		this.size = size * 4;
 		this.rows = size;
@@ -94,8 +94,8 @@ export class Maze extends THREE.Group {
 	}
 
 	generate() {
-		// this.clear();
-		this.add(this.currentCellHelper);
+		this.clear();
+		// this.add(this.currentCellHelper);
 		this.initializeCells();
 		this.draw();
 	}

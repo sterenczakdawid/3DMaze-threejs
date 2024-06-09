@@ -154,8 +154,6 @@ export class Physics {
 		});
 
 		for (const collision of collisions) {
-			console.log(collision);
-			console.log(player);
 			let deltaPosition = collision.normal.clone();
 			deltaPosition.multiplyScalar(collision.overlap);
 			player.position.add(deltaPosition);
