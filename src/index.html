@@ -10,6 +10,21 @@
 </head>
 
 <body>
+  <div class="screen" id="startScreen">
+    <h1>Welcome to the Labyrinth Game</h1>
+    <button id="playButton">Play</button>
+    <button id="joinGameButton">Join game</button>
+  </div>
+  <div class="dn" id="joinGameForm">
+    <h2>Join a game</h2>
+    <form id="roomForm">
+      <label for="roomId">Enter a room id:</label>
+      <input type="text" id="roomId" name="roomId" required>
+      <button type="submit" id="joinSubmit">Join</button>
+      <button type="submit" id="createSubmit">Create</button>
+      <button type="button" id="cancelJoin">Cancel</button>
+    </form>
+  </div>
   <canvas class="webgl"></canvas>
   <!-- <canvas class="maze"></canvas> -->
   <div id="info">

@@ -59,13 +59,18 @@ wallMaterial.side = THREE.DoubleSide;
 let current;
 
 export class Maze extends THREE.Group {
-	constructor(size = 5) {
+	constructor(size = 5, data = null) {
 		super();
+		if (data) {
+			this.data = data;
+		}
 		this.size = size * 4;
 		this.rows = size;
 		this.columns = size;
 		this.grid = [];
 		this.stack = [];
+		this.sets = {}; // Zbiory komórek połączonych korytarzami
+		this.cells = {}; // Przypisanie komórek do zbiorów
 
 		this.currentCellHelper = new THREE.Mesh(
 			new THREE.BoxGeometry(1, 1, 1).translate(0, 1, 0),
@@ -82,6 +87,43 @@ export class Maze extends THREE.Group {
 			}
 			this.grid.push(row);
 		}
+		// current = this.grid[0][0];
+		current = this.getCell(0, 0);
+
+		// this.grid[0][0].frontWall.exists = false;
+		// this.grid[this.rows - 1][this.columns - 1].backWall.exists = false;
+		this.grid[0][0].walls.frontWall.exists = false;
+		this.grid[this.rows - 1][this.columns - 1].walls.backWall.exists = false;
+	}
+
+	initializeCellsFromData(data) {
+		// 	return mazeData.map(row =>
+		// 		row.map(cell => {
+		// 				const deserializedCell = new Cell(cell.rowNum, cell.colNum, null, null);
+		// 				deserializedCell.visited = cell.visited;
+		// 				deserializedCell.walls = cell.walls;
+		// 				return deserializedCell;
+		// 		})
+		// );
+		console.log("z datą.", data);
+		for (let r = 0; r < data.length; r++) {
+			let row = [];
+			for (let c = 0; c < data[0].length; c++) {
+				const cellData = data[r][c];
+				console.log("celldata: ", cellData);
+				const cell = new Cell(
+					cellData.rowNum,
+					cellData.colNum,
+					this.grid,
+					this.size
+				);
+				cell.visited = cellData.visited;
+				cell.walls = cellData.walls;
+				row.push(cell);
+			}
+			this.grid.push(row);
+		}
+		console.log("grid", this.grid);
 		current = this.grid[0][0];
 
 		this.grid[0][0].walls.frontWall.exists = false;
@@ -96,12 +138,18 @@ export class Maze extends THREE.Group {
 	generate() {
 		this.clear();
 		// this.add(this.currentCellHelper);
-		this.initializeCells();
-		this.draw();
+		if (this.data) {
+			this.initializeCellsFromData(this.data);
+			this.draw();
+		} else {
+			this.initializeCells();
+			this.draw();
+		}
 	}
 
 	draw() {
 		this.clear();
+		console.log("generate dfs");
 		current.visited = true;
 		// console.log("Creating floor with texture:", texture);
 		for (let r = 0; r < this.rows; r++) {
@@ -160,7 +208,8 @@ export class Maze extends THREE.Group {
 
 	drawFrontWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-		wall.position.set(startX + dims - 2, 2, startZ);
+		wall.position.set(startX + dims - 2, 1, startZ);
+		// cell.frontWall.position = wall.position;
 		cell.walls.frontWall.position = wall.position;
 		wall.castShadow = true;
 		wall.receiveShadow = true;
@@ -169,7 +218,8 @@ export class Maze extends THREE.Group {
 
 	drawRightWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-		wall.position.set(startX, 2, startZ + 2);
+		wall.position.set(startX, 1, startZ + 2);
+		// cell.rightWall.position = wall.position;
 		cell.walls.rightWall.position = wall.position;
 		wall.rotation.y += Math.PI / 2;
 		wall.castShadow = true;
@@ -179,7 +229,8 @@ export class Maze extends THREE.Group {
 
 	drawBackWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-		wall.position.set(startX + dims - 2, 2, startZ + dims);
+		wall.position.set(startX + dims - 2, 1, startZ + dims);
+		// cell.backWall.position = wall.position;
 		cell.walls.backWall.position = wall.position;
 		wall.castShadow = true;
 		wall.receiveShadow = true;
@@ -188,11 +239,135 @@ export class Maze extends THREE.Group {
 
 	drawLeftWall(cell, startX, startZ, dims) {
 		const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-		wall.position.set(startX + dims, 2, startZ + 2);
+		wall.position.set(startX + dims, 1, startZ + 2);
+		// cell.leftWall.position = wall.position;
 		cell.walls.leftWall.position = wall.position;
 		wall.rotation.y += Math.PI / 2;
 		wall.castShadow = true;
 		wall.receiveShadow = true;
 		this.add(wall);
+	}
+
+	// Kruskal's
+	generateKruskal() {
+		this.clear();
+		this.initializeCells();
+
+		const edges = [];
+		for (let r = 0; r < this.rows; r++) {
+			for (let c = 0; c < this.columns; c++) {
+				const cell = this.grid[r][c];
+				if (r < this.rows - 1) {
+					edges.push({
+						cell,
+						neighbor: this.grid[r + 1][c],
+						direction: "bottom",
+					});
+				}
+				if (c < this.columns - 1) {
+					edges.push({
+						cell,
+						neighbor: this.grid[r][c + 1],
+						direction: "right",
+					});
+				}
+			}
+		}
+		// console.log(edges);
+		this.shuffleArray(edges);
+		const parent = Array.from(
+			{ length: this.rows * this.columns },
+			(_, index) => index
+		);
+		console.log("parent", parent);
+		edges.forEach((edge) => {
+			const cellIndex = edge.cell.rowNum * this.columns + edge.cell.colNum;
+			const neighborIndex =
+				edge.neighbor.rowNum * this.columns + edge.neighbor.colNum;
+
+			// Find roots of each set
+			const root1 = this.find(parent, cellIndex);
+			const root2 = this.find(parent, neighborIndex);
+
+			if (root1 !== root2) {
+				// Connect cells
+				edge.cell.removeWalls(edge.cell, edge.neighbor);
+				parent[root1] = root2;
+			}
+		});
+		// console.log("edges shuffled: ", edges);
+		// const randomIndex = Math.floor(Math.random() * edges.length);
+		// console.log(randomIndex);
+		this.drawKruskal();
+	}
+	drawKruskal() {
+		console.log("draw kruskal");
+		this.clear();
+		// Draw floor
+		for (let r = 0; r < this.rows; r++) {
+			for (let c = 0; c < this.columns; c++) {
+				const cube = new THREE.Mesh(floorGeometry, floorMaterial);
+				cube.position.set(r * 4 + 2, -0.5, c * 4 + 2);
+				cube.castShadow = true;
+				cube.receiveShadow = true;
+				this.add(cube);
+			}
+		}
+		this.drawWalls();
+	}
+	find(parent, i) {
+		if (parent[i] === i) return i;
+		return (parent[i] = this.find(parent, parent[i])); // Path compression
+	}
+
+	shuffleArray(array) {
+		for (let i = array.length - 1; i >= 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+	}
+
+	populate(row) {
+		for (let c = 0; c < this.width; c++) {
+			if (!this.cells[`${row}-${c}`]) {
+				const setId = this.nextSet++;
+				this.addCellToSet(row, c, setId);
+			}
+		}
+	}
+
+	addCellToSet(row, col, setId) {
+		const key = `${row}-${col}`;
+		this.cells[key] = setId;
+		if (!this.sets[setId]) this.sets[setId] = [];
+		this.sets[setId].push(key);
+	}
+
+	mergeSets(row, cell1, cell2) {
+		const set1 = this.cells[`${row}-${cell1}`];
+		const set2 = this.cells[`${row}-${cell2}`];
+
+		if (set1 !== set2) {
+			this.sets[set1] = this.sets[set1].concat(this.sets[set2]);
+			this.sets[set1].forEach((cellKey) => {
+				this.cells[cellKey] = set1;
+			});
+			delete this.sets[set2];
+		}
+	}
+
+	drawMaze() {
+		// Tworzy wizualizację na podstawie gridu po zakończeniu generowania
+		this.clear();
+		for (let r = 0; r < this.height; r++) {
+			for (let c = 0; c < this.width; c++) {
+				const cube = new THREE.Mesh(floorGeometry, floorMaterial);
+				cube.position.set(r * 4 + 2, -0.5, c * 4 + 2);
+				cube.castShadow = true;
+				cube.receiveShadow = true;
+				this.add(cube);
+			}
+		}
+		this.drawWalls();
 	}
 }

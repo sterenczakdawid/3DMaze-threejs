@@ -48,6 +48,12 @@ export class Physics {
 			const cellCoords = { x, z };
 			this.addCollisionHelper(cellCoords);
 			for (const wall of Object.values(cell.walls)) {
+				// for (const wall of Object.values(
+				// 	cell.frontWall,
+				// 	cell.backWall,
+				// 	cell.leftWall,
+				// 	cell.rightWall
+				// )) {
 				if (!wall.exists) continue;
 				candidates.push(wall);
 			}

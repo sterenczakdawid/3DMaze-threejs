@@ -1,12 +1,17 @@
 import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/Addons.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { io } from "socket.io-client";
+import Game from "./Game";
 
 export class Player {
 	radius = 0.5;
 	height = 1.8;
-	maxSpeed = 5;
-	input = new THREE.Vector3();
-	velocity = new THREE.Vector3();
+	// maxSpeed = 5;
+	// input = new THREE.Vector3();
+	// velocity = new THREE.Vector3();
+	model = null; // Definiujemy właściwość modelu gracza
+	mixer = null;
 
 	camera = new THREE.PerspectiveCamera(
 		70,
@@ -17,11 +22,17 @@ export class Player {
 	controls = new PointerLockControls(this.camera, document.body);
 	cameraHelper = new THREE.CameraHelper(this.camera);
 
-	constructor(scene) {
-		this.position.set(2, 2, -10);
-		this.camera.lookAt(2, 2, 1);
-		scene.add(this.camera);
-		scene.add(this.cameraHelper);
+	constructor() {
+		// console.log("new game w player");
+		this.game = new Game();
+		// console.log(this.game);
+		// console.log("nowy zawodnik");
+		// this.position.set(2, 2, -10);
+		// this.camera.lookAt(2, 2, 1);
+		// this.game.scene.add(this.camera);
+		// this.game.scene.add(this.cameraHelper);
+
+		this.loadModel(this.game.scene);
 
 		document.addEventListener("keydown", this.onKeyDown.bind(this));
 		document.addEventListener("keyup", this.onKeyUp.bind(this));
@@ -30,19 +41,54 @@ export class Player {
 			new THREE.CylinderGeometry(this.radius, this.radius, this.height, 16),
 			new THREE.MeshBasicMaterial({ wireframe: true })
 		);
-		scene.add(this.boundsHelper);
+		this.game.scene.add(this.boundsHelper);
 	}
 
-	applyInputs(dt) {
-		if (this.controls.isLocked) {
-			this.velocity.x = this.input.x;
-			this.velocity.z = this.input.z;
-			this.controls.moveRight(this.velocity.x * dt);
-			this.controls.moveForward(this.velocity.z * dt);
+	loadModel(scene) {
+		const loader = new GLTFLoader();
+		loader.load("/models/Character.glb", (gltf) => {
+			// console.log("gltf", gltf);
+			// scene.add(gltf.scene);
 
-			document.getElementById("player-position").innerHTML = this.toString();
-		}
+			// mixer = new THREE.AnimationMixer(gltf.scene);
+			// const action = mixer.clipAction(gltf.animations[0]);
+			// action.play();
+			// console.log(gltf);
+			this.model = gltf.scene;
+			this.model.position.copy(this.position); // Ustawienie modelu w pozycji kamery
+			this.model.position.y = 0; // Ustawienie modelu na ziemi
+			scene.add(this.model);
+			const lol = gltf.animations.findIndex((anim) => anim.name == "Idle");
+			// gltf.animations.forEach((animation) => {
+			// 	console.log(animation.name);
+			// });
+			// const idleAnimation = gltf.animations.find("Idle");
+			// console.log(idleAnimation);
+			// console.log(lol);
+			this.mixer = new THREE.AnimationMixer(this.model);
+			if (gltf.animations.length > 0) {
+				const action = this.mixer.clipAction(gltf.animations[12]);
+				action.play();
+			}
+		});
 	}
+
+	// applyInputs(dt) {
+	// 	if (this.controls.isLocked) {
+	// 		this.velocity.x = this.input.x;
+	// 		this.velocity.z = this.input.z;
+	// 		this.controls.moveRight(this.velocity.x * dt);
+	// 		this.controls.moveForward(this.velocity.z * dt);
+	// 		// Aktualizacja pozycji modelu gracza
+	// 		if (this.model) {
+	// 			this.model.position.copy(this.camera.position);
+	// 			this.model.position.y = 0;
+	// 			this.model.rotation.y = this.camera.rotation.y;
+	// 		}
+
+	// 		document.getElementById("player-position").innerHTML = this.toString();
+	// 	}
+	// }
 
 	get position() {
 		return this.camera.position;
@@ -101,5 +147,32 @@ export class Player {
 	updateBoundsHelper() {
 		this.boundsHelper.position.copy(this.camera.position);
 		this.boundsHelper.position.y -= this.height / 2;
+	}
+
+	update(deltaTime) {
+		if (this.role === "Spectator") {
+			const hostData = this.game.remoteData.find(
+				(player) => player.role === "Host"
+			);
+			if (hostData) {
+				this.camera.position.set(hostData.x, hostData.y + 5, hostData.z - 10); // Obserwuj z tyłu
+				this.camera.lookAt(hostData.x, hostData.y, hostData.z);
+			}
+		} else if (this.mixer) {
+			this.mixer.update(deltaTime);
+		}
+		// if (this.mixer) {
+		// 	this.mixer.update(deltaTime);
+		// }
+		// if (this.game.remoteData.length > 0) {
+		// 	let found = false;
+		// 	for (let data of this.game.remoteData) {
+		// 		if (data.id != this.id) continue;
+		// 		//Found the player
+		// 		this.position.set(data.x, data.y, data.z);
+		// 		found = true;
+		// 	}
+		// 	// if (!found) this.game.removePlayer(this);
+		// }
 	}
 }

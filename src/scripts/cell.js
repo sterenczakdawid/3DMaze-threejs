@@ -16,54 +16,28 @@ export class Cell extends THREE.Group {
 
 		this.visited = false;
 		this.walls = {
-			frontWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: false },
-			rightWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: true },
-			backWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: false },
-			leftWall: { exists: true, position: new THREE.Vector3(0, 0, 0), isSide: true },
+			frontWall: {
+				exists: true,
+				position: new THREE.Vector3(0, 0, 0),
+				isSide: false,
+			},
+			rightWall: {
+				exists: true,
+				position: new THREE.Vector3(0, 0, 0),
+				isSide: true,
+			},
+			backWall: {
+				exists: true,
+				position: new THREE.Vector3(0, 0, 0),
+				isSide: false,
+			},
+			leftWall: {
+				exists: true,
+				position: new THREE.Vector3(0, 0, 0),
+				isSide: true,
+			},
 		};
 	}
-
-	drawWalls(size, rows, columns) {
-		// let x = (this.colNum * size) / columns;
-		// let y = (this.rowNum * size) / rows;
-		// let startX = (this.rowNum * size) / rows;
-		// let endX = startX + size / rows;
-		// let startZ = (this.colNum * size) / columns;
-		// let endZ = startZ + size / columns;
-		// if (this.walls.frontWall) this.drawFrontWall(x, y, size, columns, rows);
-		// if (this.walls.rightWall) this.drawRightWall(x, y, size, columns, rows);
-		// if (this.walls.backWall) this.drawBackWall(x, y, size, columns, rows);
-		// if (this.walls.leftWall) this.drawLeftWall(x, y, size, columns, rows);
-		// if (this.visited) {
-		// 	ctx.fillRect(x + 1, y + 1, size / columns - 2, size / rows - 2);
-		// }
-		// console.log(
-		// 	`startX: ${startX}, endX: ${endX}, startZ: ${startZ}, endZ: ${endZ}`
-		// );
-		// ctx.strokeStyle = "white";
-		// ctx.fillStyle = "black";
-		// ctx.lineWidth = 2;
-		// if (this.walls.topWall) this.drawTopWall(x, y, size, columns, rows);
-		// if (this.walls.rightWall) this.drawRightWall(x, y, size, columns, rows);
-		// if (this.walls.bottomWall) this.drawBottomWall(x, y, size, columns, rows);
-		// if (this.walls.leftWall) this.drawLeftWall(x, y, size, columns, rows);
-		// if (this.visited) {
-		// 	ctx.fillRect(x + 1, y + 1, size / columns - 2, size / rows - 2);
-		// }
-	}
-
-	drawTopWall(x, y, size, columns, rows) {
-		ctx.beginPath();
-		ctx.moveTo(x, y);
-		ctx.lineTo(x + size / columns, y);
-		ctx.stroke();
-	}
-
-	drawRightWall(x, y, size, columns, rows) {}
-
-	drawBottomWall(x, y, size, columns, rows) {}
-
-	drawLeftWall(x, y, size, columns, rows) {}
 
 	checkNeighbours() {
 		let grid = this.parentGrid;
@@ -110,5 +84,14 @@ export class Cell extends THREE.Group {
 			current.walls.leftWall.exists = false;
 			next.walls.rightWall.exists = false;
 		}
+	}
+
+	toJSON() {
+		return {
+			rowNum: this.rowNum,
+			colNum: this.colNum,
+			visited: this.visited,
+			walls: this.walls,
+		};
 	}
 }
