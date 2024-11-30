@@ -1,15 +1,14 @@
 import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/Addons.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { io } from "socket.io-client";
 import Game from "./Game";
 
 export class Player {
 	radius = 0.5;
 	height = 1.8;
-	// maxSpeed = 5;
-	// input = new THREE.Vector3();
-	// velocity = new THREE.Vector3();
+	maxSpeed = 5;
+	input = new THREE.Vector3();
+	velocity = new THREE.Vector3();
 	model = null; // Definiujemy właściwość modelu gracza
 	mixer = null;
 
@@ -22,15 +21,18 @@ export class Player {
 	controls = new PointerLockControls(this.camera, document.body);
 	cameraHelper = new THREE.CameraHelper(this.camera);
 
-	constructor() {
+	constructor(socket, roomId) {
 		// console.log("new game w player");
 		this.game = new Game();
+		this.socket = socket;
+		this.roomId = roomId;
+		this.role = null;
 		// console.log(this.game);
 		// console.log("nowy zawodnik");
-		// this.position.set(2, 2, -10);
-		// this.camera.lookAt(2, 2, 1);
-		// this.game.scene.add(this.camera);
-		// this.game.scene.add(this.cameraHelper);
+		this.position.set(2, 2, -10);
+		this.camera.lookAt(2, 2, 1);
+		this.game.scene.add(this.camera);
+		this.game.scene.add(this.cameraHelper);
 
 		this.loadModel(this.game.scene);
 
@@ -42,6 +44,35 @@ export class Player {
 			new THREE.MeshBasicMaterial({ wireframe: true })
 		);
 		this.game.scene.add(this.boundsHelper);
+
+		this.initSocket();
+	}
+
+	initSocket() {
+		this.socket.on("assignRole", (data) => {
+			this.role = data.role;
+			console.log(`Assigned role: ${this.role}`);
+			if (this.role === "Spectator") {
+				this.socket.on("hostPositionUpdate", (data) => {
+					this.updateHostPosition(data);
+				});
+
+				this.socket.on("hostDisconnected", () => {
+					alert("Host left the game");
+				});
+			}
+		});
+	}
+
+	updateSocket() {
+		if (this.socket && this.role === "Host") {
+			this.socket.emit("updatePosition", {
+				roomId: this.roomId,
+				x: this.position.x,
+				y: this.position.y,
+				z: this.position.z,
+			});
+		}
 	}
 
 	loadModel(scene) {
@@ -73,22 +104,26 @@ export class Player {
 		});
 	}
 
-	// applyInputs(dt) {
-	// 	if (this.controls.isLocked) {
-	// 		this.velocity.x = this.input.x;
-	// 		this.velocity.z = this.input.z;
-	// 		this.controls.moveRight(this.velocity.x * dt);
-	// 		this.controls.moveForward(this.velocity.z * dt);
-	// 		// Aktualizacja pozycji modelu gracza
-	// 		if (this.model) {
-	// 			this.model.position.copy(this.camera.position);
-	// 			this.model.position.y = 0;
-	// 			this.model.rotation.y = this.camera.rotation.y;
-	// 		}
+	applyInputs(dt) {
+		if (this.role === "Host" && this.controls.isLocked) {
+			this.velocity.x = this.input.x;
+			this.velocity.z = this.input.z;
+			this.controls.moveRight(this.velocity.x * dt);
+			this.controls.moveForward(this.velocity.z * dt);
+			// Aktualizacja pozycji modelu gracza
+			if (this.model) {
+				this.model.position.copy(this.camera.position);
+				this.model.position.y = 0;
+				this.model.rotation.y = this.camera.rotation.y;
+			}
 
-	// 		document.getElementById("player-position").innerHTML = this.toString();
-	// 	}
-	// }
+			this.updateSocket();
+
+			document.getElementById("player-position").innerHTML = this.toString();
+		} else if (this.role === "Spectator") {
+			// console.log("idk spectator?");
+		}
+	}
 
 	get position() {
 		return this.camera.position;
@@ -150,14 +185,9 @@ export class Player {
 	}
 
 	update(deltaTime) {
-		if (this.role === "Spectator") {
-			const hostData = this.game.remoteData.find(
-				(player) => player.role === "Host"
-			);
-			if (hostData) {
-				this.camera.position.set(hostData.x, hostData.y + 5, hostData.z - 10); // Obserwuj z tyłu
-				this.camera.lookAt(hostData.x, hostData.y, hostData.z);
-			}
+		if (this.role === "Spectator" && this.hostData) {
+			// console.log("lmao");
+			this.model.position.set(this.hostData.x, 0, this.hostData.z);
 		} else if (this.mixer) {
 			this.mixer.update(deltaTime);
 		}
@@ -174,5 +204,9 @@ export class Player {
 		// 	}
 		// 	// if (!found) this.game.removePlayer(this);
 		// }
+	}
+
+	updateHostPosition(data) {
+		this.hostData = data;
 	}
 }

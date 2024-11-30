@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "lil-gui": "^0.19.2",
-    "playroomkit": "^0.0.83",
     "socket.io-client": "^4.8.1",
     "three": "^0.164.1",
     "vite-plugin-restart": "^0.4.0"

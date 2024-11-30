@@ -105,12 +105,12 @@ export class Maze extends THREE.Group {
 		// 				return deserializedCell;
 		// 		})
 		// );
-		console.log("z datą.", data);
+		// console.log("z datą.", data);
 		for (let r = 0; r < data.length; r++) {
 			let row = [];
 			for (let c = 0; c < data[0].length; c++) {
 				const cellData = data[r][c];
-				console.log("celldata: ", cellData);
+				// console.log("celldata: ", cellData);
 				const cell = new Cell(
 					cellData.rowNum,
 					cellData.colNum,
@@ -137,19 +137,21 @@ export class Maze extends THREE.Group {
 
 	generate() {
 		this.clear();
-		// this.add(this.currentCellHelper);
+		// return new Promise((resolve) => {
 		if (this.data) {
 			this.initializeCellsFromData(this.data);
 			this.draw();
+			resolve();
 		} else {
 			this.initializeCells();
 			this.draw();
 		}
+		// });
 	}
 
 	draw() {
 		this.clear();
-		console.log("generate dfs");
+		// console.log("generate dfs");
 		current.visited = true;
 		// console.log("Creating floor with texture:", texture);
 		for (let r = 0; r < this.rows; r++) {

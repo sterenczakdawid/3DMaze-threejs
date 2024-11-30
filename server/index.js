@@ -17,29 +17,84 @@ let maze = {};
 io.on("connection", (socket) => {
 	console.log("A user connected: ", socket.id);
 
-	socket.on("joinRoom", (data) => {
-		console.log("łączenie z pokojem na serwerze, id: ", data.roomId);
-		// console.log("Serwer posiada juz taki maze piekny: ", maze);
-		socket.emit("mazeData", maze);
+	socket.on("createRoom", (data) => {
+		const roomId = data.roomId;
+		if (rooms[roomId]) {
+			socket.emit("error", { message: "Room with given name already exists" });
+			return;
+		}
+
+		rooms[roomId] = {
+			hostId: socket.id,
+			maze: data.maze,
+			players: [socket.id],
+		};
+
+		socket.join(roomId);
+		socket.emit("roomCreated", { roomId });
+		socket.emit("assignRole", { role: "Host" });
+		console.log(`User ${socket.id} created and joined room ${roomId} as Host`);
 	});
 
-	socket.on("createRoom", (data) => {
-		// console.log("Tworzenie pokoju na serwerze, id: ", data.roomId);
-		// console.log("Otrzymalem gre XD: ", data.maze[0][0].walls);
-		// const dmaze = JSON.parse(data.maze);
-		// console.log("Serwer otrzymał 0 0: ", data.maze[0][0]);
-		// console.log("Serwer otrzymal 0 1", data.maze[0][1]);
-		maze = data.maze;
+	socket.on("joinRoom", (data) => {
+		const roomId = data.roomId;
+		if (!rooms[roomId]) {
+			socket.emit("error", { message: "Room with given name does not exist" });
+			return;
+		}
+
+		rooms[roomId].players.push(socket.id);
+		socket.join(roomId);
+		socket.emit("roomJoined", { roomId, maze: rooms[roomId].maze });
+		socket.emit("assignRole", { role: "Spectator" });
+		console.log(`User ${socket.id} joined room ${roomId} as Spectator`);
+	});
+
+	// socket.on("createRoom", (data) => {
+	// 	maze = data.maze;
+	// });
+
+	socket.on("updatePosition", (data) => {
+		const roomId = Object.keys(rooms).find(
+			(roomId) => rooms[roomId].hostId === socket.id
+		);
+		if (roomId) {
+			socket.to(roomId).emit("hostPositionUpdate", data);
+		}
+	});
+
+	socket.on("updateMaze", (data) => {
+		const { roomId, maze } = data;
+
+		if (rooms[roomId]) {
+			rooms[roomId].maze = maze;
+			socket.to(roomId).emit("mazeUpdated", { maze });
+			console.log(`Labirynt w pokoju ${roomId} został zaktualizowany`);
+		} else {
+			console.log(`Pokój ${roomId} nie istnieje`);
+		}
 	});
 
 	socket.on("disconnect", () => {
 		console.log(`User ${socket.id} disconnected`);
+
+		for (const roomId in rooms) {
+			const room = rooms[roomId];
+			if (room.players.includes(socket.id)) {
+				room.players = room.players.filter((id) => id !== socket.id);
+
+				if (room.hostId === socket.id) {
+					console.log(`Host opuścił pokój ${roomId}, usuwanie pokoju.`);
+					socket.to(roomId).emit("hostDisconnected");
+					delete rooms[roomId];
+				} else {
+					console.log(`Gracz ${socket.id} opuścił pokój ${roomId}`);
+				}
+				break;
+			}
+		}
 	});
 });
-
-// app.get("/", (req, res) => {
-// 	res.send("<h1>Hello world</h1>");
-// });
 
 server.listen(3000, () => {
 	console.log("server running at port 3000");
