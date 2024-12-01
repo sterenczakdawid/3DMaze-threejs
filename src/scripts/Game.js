@@ -13,16 +13,23 @@ import { CAMERA } from "../constants/constants";
 let instance = null;
 
 export default class Game {
-	constructor(canvas, mode, mazeData = null, socket, roomId) {
+	constructor(canvas, options) {
 		if (instance) {
 			return instance;
 		}
 		instance = this;
+
 		this.canvas = canvas;
-		this.mode = mode;
-		this.mazeData = mazeData;
-		this.socket = socket;
-		this.roomId = roomId;
+		this.mode = options.mode;
+		this.socket = options.socket;
+		this.roomId = options.roomId;
+
+		if (options.mazeData) this.mazeData = options.mazeData;
+		if (options.difficulty) this.difficulty = options.difficulty || "easy";
+		if (options.algorithm) this.algorithm = options.algorithm || "dfs";
+		this.mazeSize =
+			this.difficulty === "easy" ? 5 : this.difficulty === "medium" ? 10 : 15;
+
 		this.scene = new THREE.Scene();
 		this.sizes = { width: window.innerWidth, height: window.innerHeight };
 		this.timer = new Timer();
@@ -77,19 +84,20 @@ export default class Game {
 
 	setupMaze() {
 		if (this.mode === "creator") {
-			console.log(
-				"creator mode, generuję maze sam bo maze data = null? prawda? :",
-				this.mazeData
-			);
-			this.maze = new Maze();
-			this.maze.generate();
+			const mazeOptions = {
+				size: this.mazeSize,
+			};
+			this.maze = new Maze(mazeOptions);
+			if (this.algorithm === "dfs") {
+				this.maze.generate();
+			} else if (this.algorithm === "kruskal") {
+				this.maze.generateKruskal();
+			}
 		} else {
-			console.log(
-				"spectator mode, generuję maze na podstawie: ",
-				this.mazeData
-			);
+			console.log("obs");
 			if (this.mazeData) {
-				this.maze = new Maze(5, this.mazeData);
+				const mazeOptions = { mazeData: this.mazeData };
+				this.maze = new Maze(mazeOptions);
 			}
 			this.maze.generate();
 		}
@@ -125,21 +133,21 @@ export default class Game {
 			this.scene,
 			this.player.controls.isLocked ? this.player.camera : this.orbitCamera
 		);
-		stats.update();
+		// stats.update();
 		this.previousTime = currentTime;
 	}
 
 	resetGame() {
-		console.log("resetuję grę!");
 		this.player.controls.lock();
 		this.player.position.set(2, 2, -10);
 		this.player.camera.lookAt(2, 2, 1);
 		this.player.velocity.set(0, 0, 0);
 
 		this.scene.remove(this.maze);
-		this.maze = new Maze();
-		this.maze.generate();
-		this.scene.add(this.maze);
+		this.setupMaze();
+		// this.maze = new Maze();
+		// this.maze.generate();
+		// this.scene.add(this.maze);
 
 		if (this.mode === "creator") {
 			setTimeout(() => {
@@ -173,9 +181,10 @@ export default class Game {
 	}
 
 	updateMaze(newMazeData) {
-		console.log("Wchodze do update maze");
 		this.scene.remove(this.maze);
-		this.maze = new Maze(5, newMazeData);
+		const mazeOptions = { mazeData: newMazeData };
+		this.maze = new Maze(mazeOptions);
+		// this.maze = new Maze(5, newMazeData);
 		this.maze.generate();
 		this.scene.add(this.maze);
 		console.log("Labirynt został zaktualizowany");

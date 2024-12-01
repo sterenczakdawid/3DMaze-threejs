@@ -59,14 +59,25 @@ wallMaterial.side = THREE.DoubleSide;
 let current;
 
 export class Maze extends THREE.Group {
-	constructor(size = 5, data = null) {
+	// constructor(size = 5, data = null) {
+	constructor(options) {
+		console.log("options maze", options);
 		super();
-		if (data) {
-			this.data = data;
+		if (options.mazeData) {
+			this.data = options.mazeData;
 		}
-		this.size = size * 4;
-		this.rows = size;
-		this.columns = size;
+		if (options.size) {
+			this.size = options.size * 4;
+		} else {
+			if (options.mazeData) {
+				this.size = options.mazeData.length * 4;
+			}
+		}
+		console.log("size", this.size);
+		console.log("data", this.data);
+		// this.size = size * 4;
+		this.rows = this.size / 4;
+		this.columns = this.size / 4;
 		this.grid = [];
 		this.stack = [];
 		this.sets = {}; // Zbiory komórek połączonych korytarzami
@@ -141,7 +152,7 @@ export class Maze extends THREE.Group {
 		if (this.data) {
 			this.initializeCellsFromData(this.data);
 			this.draw();
-			resolve();
+			// resolve();
 		} else {
 			this.initializeCells();
 			this.draw();
@@ -252,6 +263,7 @@ export class Maze extends THREE.Group {
 
 	// Kruskal's
 	generateKruskal() {
+		console.log("kruskal");
 		this.clear();
 		this.initializeCells();
 

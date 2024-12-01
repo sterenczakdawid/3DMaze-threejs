@@ -15,13 +15,41 @@
     <button id="playButton">Play</button>
     <button id="joinGameButton">Join game</button>
   </div>
-  <div class="dn" id="joinGameForm">
-    <h2>Join a game</h2>
-    <form id="roomForm">
-      <label for="roomId">Enter a room id:</label>
-      <input type="text" id="roomId" name="roomId" required>
-      <button type="submit" id="joinSubmit">Join</button>
+  <div class="dn" id="createGameScreen">
+    <h2>Create a game</h2>
+    <form id="createRoomForm">
+      <label for="createRoomId">Enter a room id:</label>
+      <input type="text" id="createRoomId" name="roomId" required>
+
+      <div id="difficultySelector">
+        <label for="difficulty">Select Difficulty:</label>
+        <select id="difficulty" name="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div id="algorithmSelector">
+        <label for="algorithm">Select Maze Generation Algorithm:</label>
+        <select id="algorithm" name="algorithm">
+          <option value="dfs">Depth-First Search (DFS)</option>
+          <option value="kruskal">Kruskal's Algorithm</option>
+        </select>
+      </div>
+
       <button type="submit" id="createSubmit">Create</button>
+      <button type="button" id="cancelCreate">Cancel</button>
+    </form>
+  </div>
+
+  <div class="dn" id="joinGameScreen">
+    <h2>Join a game</h2>
+    <form id="joinRoomForm">
+      <label for="joinRoomId">Enter a room id:</label>
+      <input type="text" id="joinRoomId" name="roomId" required>
+
+      <button type="submit" id="joinSubmit">Join</button>
       <button type="button" id="cancelJoin">Cancel</button>
     </form>
   </div>
